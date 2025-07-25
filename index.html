@@ -1,0 +1,214 @@
+<script type="text/javascript">
+        var gk_isXlsx = false;
+        var gk_xlsxFileLookup = {};
+        var gk_fileData = {};
+        function filledCell(cell) {
+          return cell !== '' && cell != null;
+        }
+        function loadFileData(filename) {
+        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
+            try {
+                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
+                var firstSheetName = workbook.SheetNames[0];
+                var worksheet = workbook.Sheets[firstSheetName];
+
+                // Convert sheet to JSON to filter blank rows
+                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
+                // Filter out blank rows (rows where all cells are empty, null, or undefined)
+                var filteredData = jsonData.filter(row => row.some(filledCell));
+
+                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
+                var headerRowIndex = filteredData.findIndex((row, index) =>
+                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
+                );
+                // Fallback
+                if (headerRowIndex === -1 || headerRowIndex > 25) {
+                  headerRowIndex = 0;
+                }
+
+                // Convert filtered JSON back to CSV
+                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
+                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
+                return csv;
+            } catch (e) {
+                console.error(e);
+                return "";
+            }
+        }
+        return gk_fileData[filename] || "";
+        }
+        </script><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Hobbies</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        body {
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+        .hobby-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards;
+        }
+        .hobby-card:hover {
+            transform: translateY(-5px) scale(1.03);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+        }
+        .hobby-description {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        .hobby-card.active .hobby-description {
+            max-height: 300px;
+        }
+        .category-btn, .theme-toggle {
+            transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+        }
+        .category-btn:hover, .theme-toggle:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .hobby-card:nth-child(1) { animation-delay: 0.1s; }
+        .hobby-card:nth-child(2) { animation-delay: 0.2s; }
+        .hobby-card:nth-child(3) { animation-delay: 0.3s; }
+        .hobby-card:nth-child(4) { animation-delay: 0.4s; }
+        .hobby-card:nth-child(5) { animation-delay: 0.5s; }
+        .hobby-card:nth-child(6) { animation-delay: 0.6s; }
+        .hobby-card:nth-child(7) { animation-delay: 0.7s; }
+        .hobby-card:nth-child(8) { animation-delay: 0.8s; }
+        /* Dark mode styles */
+        .dark {
+            background-image: linear-gradient(to bottom right, #1e293b, #2d3748, #4a5568);
+            color: #e2e8f0;
+        }
+        .dark .text-gray-800 {
+            color: #e2e8f0;
+        }
+        .dark .bg-white {
+            background-color: #2d3748;
+        }
+        .dark .text-gray-600 {
+            color: #cbd5e0;
+        }
+        .dark .hobby-card {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+        .dark .bg-gray-200 {
+            background-color: #4a5568;
+        }
+        .dark .hobby-card.bg-blue-100    { background-color: #23395d !important; box-shadow: 0 0 24px 6px #3b82f6cc, 0 4px 12px rgba(0,0,0,0.5); }
+        .dark .hobby-card.bg-green-100   { background-color: #234d3c !important; box-shadow: 0 0 24px 6px #22c55ecc, 0 4px 12px rgba(0,0,0,0.5); }
+        .dark .hobby-card.bg-red-100     { background-color: #4a2323 !important; box-shadow: 0 0 24px 6px #ef4444cc, 0 4px 12px rgba(0,0,0,0.5); }
+        .dark .hobby-card.bg-yellow-100  { background-color: #4a4323 !important; box-shadow: 0 0 24px 6px #facc15cc, 0 4px 12px rgba(0,0,0,0.5); }
+        .dark .hobby-card.bg-gray-100    { background-color: #2d3748 !important; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-200 via-white to-pink-100 min-h-screen flex flex-col items-center p-6">
+    <div class="container max-w-6xl w-full">
+        <div class="flex justify-between items-center mb-8">
+            <h1 class="text-4xl font-extrabold text-gray-800">My Hobbies</h1>
+            <button class="theme-toggle px-4 py-2 bg-gray-200 text-gray-800 rounded-lg shadow-md" onclick="document.body.classList.toggle('dark'); this.querySelectorAll('span').forEach(span => span.classList.toggle('hidden'));">
+                <span class="dark:hidden">🌙</span>
+                <span class="hidden dark:block">☀️</span>
+            </button>
+        </div>
+        <div class="flex flex-wrap justify-center gap-4 mb-8">
+            <button class="category-btn px-4 py-2 bg-indigo-500 text-white rounded-lg shadow-md" data-category="all">All</button>
+            <button class="category-btn px-4 py-2 bg-blue-500 text-white rounded-lg shadow-md" data-category="tech">Tech</button>
+            <button class="category-btn px-4 py-2 bg-green-500 text-white rounded-lg shadow-md" data-category="creative">Creative</button>
+            <button class="category-btn px-4 py-2 bg-red-500 text-white rounded-lg shadow-md" data-category="physical">Physical</button>
+            <button class="category-btn px-4 py-2 bg-yellow-500 text-white rounded-lg shadow-md" data-category="intellectual">Intellectual</button>
+            <button class="category-btn px-4 py-2 bg-gray-500 text-white rounded-lg shadow-md" data-category="past">Past Hobbies</button>
+        </div>
+        <div class="hobbies-grid grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="hobbies-grid"></div>
+    </div>
+
+    <script>
+        const hobbies = [
+            { name: "Programming / Coding", description: "Enjoying the process of writing code to create apps or solve problems,and every now and then, shit magically decides to work. i made this website.", category: "tech" },
+            { name: "Game Dev and Modding", description: "Having fun building small games or tweaking existing ones to try out new ideas.", category: "tech" },
+            { name: "Cyber Security", description: "Encryption and ethical hacking. Breaking into stuff legally is surprisingly fun.", category: "tech" },
+            { name: "Tinkering with Electronics", description: "Playing around with circuits and gadgets to build or experiment with shit.", category: "tech" },
+
+            { name: "Drawing", description: "Sketching stuff until the lines make sense... or not. Mostly vibes.", category: "creative" },
+            { name: "Painting", description: "Throwing colors on a canvas and pretending it's intentional. Sometimes it even looks cool.", category: "creative" },
+            { name: "Graphic Design (2D and 3D)", description: "Creating digital visuals and 3D models, in Blender for 3D and Clip Studio Paint for 2D chaos.", category: "creative" },
+            { name: "Photography and Photo Editing", description: "Capturing moments and then aggressively editing them until they look cinematic as hell.", category: "creative" },
+            { name: "Writing Poems", description: "Sometimes sad, sometimes chaotic, always too dramatic. Therapy but with rhyme.", category: "creative" },
+            { name: "Building Lego Sets", description: "Assembling Lego models for fun. And definitely not stepping on the pieces barefoot.", category: "creative" },
+            { name: "Baking", description: "At this point its a miracle im not obese. Sometimes I make bread, sometimes cakes, and sometimes I make bricks. Either way, the smoke alarm gets a workout. (i make amazing brownies btw)", category: "creative" },
+            { name: "Cooking", description: "10% cooking 90% praying to whatever god can help. and 80% of the time it turns out great... we dont talk about te 20%.", category: "creative" },
+            { name: "Cocktail Making", description: "Alchemy but drunk. I shake, I stir, I pretend I’m in a bar while committing war crimes against alcohol.", category: "creative" },
+
+            { name: "Baseball", description: "Am I shit? Yes. Is it fun? Yes. I play outfield and pitcher, and sometimes I even hit the ball.", category: "physical" },
+            { name: "Gym", description: "Where I lift heavy shit (or try) so I can suffer better in other areas of life.", category: "physical" },
+            { name: "Running", description: "Running away from responsibilities, but like, in a cardio-efficient way.", category: "physical" },
+            { name: "Cars", description: "Car go vroom, I like. Fuck Tesla. AE86 Trueno on top — Initial D supremacy.", category: "physical" },
+            { name: "Motorbikes", description: "i want... so bad.", category: "physical" },
+            { name: "Watching F1", description: "I love watching 19 talented drivers and lance stroll drive around in a circle. And yes im a ferrari fan even tho the season is so shit the horse left. Because everyone is a ferrari fan.", category: "physical" },
+
+            { name: "Learning Languages", description: "Because why not? I know Danish, Norwegian, English, German, Danish sign language, International sign language, and I’m learning Korean. Brain soup.", category: "intellectual" },
+            { name: "Scientific Reading", description: "I read weird stuff about physics and biology for fun. I'm not okay and I love it.", category: "intellectual" },
+            { name: "Mathematics Puzzles", description: "Brain pain is temporary, actually nevermind...", category: "intellectual" },
+            { name: "Reading History", description: "Dead people did weird shit and I’m invested. Also, I judge historical figures like reality TV.", category: "intellectual" },
+            { name: "Reading Books, Manhwa, and Manga as well as watching anime", description: "Yes, I’m a weeb. So what? Romance on top, on god. Fight me.", category: "intellectual" },
+            { name: "Gaming", description: "Shocker... My backlog is longer than my will to live.", category: "intellectual" },
+
+            { name: "Handball (used to)", description: "Played handball in the past, had to stop due to injuries, but god I miss it. I played right wing and keeper.", category: "past" },
+            { name: "Graffiti (used to)", description: "Making illegal walls prettier one spray at a time. Reformed (probably).", category: "past" },
+            { name: "Sewing (used to)", description: "Tried to fix clothes, ended up making accidental fashion statements.", category: "past" },
+            { name: "Jewelry Making (used to)", description: "Had fun making jewelry in the past. Then I realized how expensive shiny shit is...", category: "past" },
+            { name: "Woodworking (used to)", description: "It was fun but I lowkey got bored. Still love the smell of sawdust tho.", category: "past" }
+        ];
+
+        const hobbiesGrid = document.getElementById('hobbies-grid');
+        const categoryButtons = document.querySelectorAll('.category-btn');
+
+        function renderHobbies(category = 'all') {
+            hobbiesGrid.innerHTML = '';
+            const filteredHobbies = category === 'all' ? hobbies : hobbies.filter(hobby => hobby.category === category);
+            filteredHobbies.forEach(hobby => {
+                const card = document.createElement('div');
+                const categoryStyles = {
+                    tech: ['bg-blue-100', 'border-blue-500', 'dark:bg-blue-900', 'dark:border-blue-100'],
+                    creative: ['bg-green-100', 'border-green-500', 'dark:bg-green-900', 'dark:border-green-400'],
+                    physical: ['bg-red-100', 'border-red-500', 'dark:bg-red-900', 'dark:border-red-400'],
+                    intellectual: ['bg-yellow-100', 'border-yellow-500', 'dark:bg-yellow-900', 'dark:border-yellow-400'],
+                    past: ['bg-gray-100', 'border-gray-500', 'dark:bg-gray-700', 'dark:border-gray-400']
+                };
+                card.classList.add('hobby-card', 'border-l-4', 'bg-white', 'rounded-xl', 'shadow-lg', 'p-5', ...categoryStyles[hobby.category]);
+                card.innerHTML = `
+                    <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-3">${hobby.name}</h2>
+                    <div class="hobby-description text-gray-600 dark:text-gray-300 text-sm">${hobby.description}</div>
+                `;
+                card.addEventListener('click', () => {
+                    const isActive = card.classList.contains('active');
+                    document.querySelectorAll('.hobby-card').forEach(c => c.classList.remove('active'));
+                    if (!isActive) {
+                        card.classList.add('active');
+                    }
+                });
+                hobbiesGrid.appendChild(card);
+            });
+        }
+
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                categoryButtons.forEach(btn => btn.classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500'));
+                button.classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
+                renderHobbies(button.dataset.category);
+            });
+        });
+
+        renderHobbies();
+    </script>
+</body>
+</html>
